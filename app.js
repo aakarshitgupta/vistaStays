@@ -9,7 +9,8 @@ const ExpressError = require('./utils/ExpressError.js');
 const bodyParser = require("body-parser");
 const listings = require("./routes/listing.js");
 const reviews = require("./routes/review.js");
-
+const session = require("express-session");
+const flash = require("connect-flash");
 
 main()
   .then(() => {
@@ -30,8 +31,26 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "/public")));
 
+const sessionOptions = {
+  secret: "mySuperSecretCode",
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    httpOnly: true,
+    expires: Date.now() + 1000 * 60 * 60 * 24 * 7, 
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+  },
+};
 app.get("/", (req, res) => {
   res.send("root page");
+});
+
+app.use(session(sessionOptions));
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");
+  next();
 });
 
 app.use("/listings", listings);
